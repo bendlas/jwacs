@@ -150,3 +150,56 @@
                ~%                  Defaults to on.
                ~%~%"
             "jwacs" foo bar foo bar)))
+
+(defun slurp-stream (stream)
+  (with-output-to-string (out)
+    (let ((arr (make-array 1024 :element-type 'character)))
+      (loop
+         (let ((cnt (read-sequence arr stream)))
+           (if (zerop cnt)
+               (return)
+               (write-sequence arr out :end cnt)))))))
+
+(defun handle-cps-connection (stream)
+  (format stream "// Nice of you to drop by :-)~%")
+  (handler-bind
+      ((error (lambda (c)
+                (format stream "
+
+// ##### An Error occurred during transformation and I am so, so sorry
+// The error messaege was
+/* ~a */
+" c)
+                (format stream "// The backtrace was~%/*~%")
+                (uiop/image:print-condition-backtrace c :stream stream)
+                (format stream "*/~%"))))
+    (with-module-output (out (make-module :type 'js :compressed-p nil
+                                          :inline-stream stream))
+      (emit-elms (pipeline-compile
+                  (parse (slurp-stream stream))
+                  *compiler-pipeline*)
+                 out
+                 :pretty-output t))))
+
+(let ((stderr *error-output*))
+  (defun error-log (&rest args)
+    (apply #'format stderr args)))
+
+(defun cps-accept-loop (server)
+  (let ((connection (usocket:socket-accept server :element-type 'character)))
+    #+_(error-log "Accepted connection, starting thread~%")
+    (bt:make-thread
+     (lambda ()
+       #+_(error-log "Thread started~%")
+       (unwind-protect (handle-cps-connection (usocket:socket-stream connection))
+         (usocket:socket-close connection))
+       #+_(error-log "Thread finished~%")))
+    (cps-accept-loop server)))
+
+(defun start-cps-server (host port)
+  (let ((server (usocket:socket-listen host port)))
+    (unwind-protect
+         (cps-accept-loop server)
+      (progn
+        (usocket:socket-close server)
+        #+_(error-log "Server finished~%")))))
