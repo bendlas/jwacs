@@ -143,6 +143,13 @@
 
 ;; The default behaviour for any transformation on a source-element that has children
 ;; is to return a new source-element whose children have been transformed.
+#+_(defmethod transform (xform (elm source-element))
+  (apply
+   #'update-struct
+   (loop for slot in (structure-slots elm)
+         collect slot
+         collect (transform xform (slot-value elm slot)))))
+
 (defmethod transform (xform (elm source-element))
   (apply
    (get-constructor elm)

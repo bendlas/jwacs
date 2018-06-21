@@ -50,7 +50,21 @@
   (loop with l = (make-lexer-function (make-instance 'javascript-lexer :text js-string))
         for x = (multiple-value-list (funcall l))
         until (null (first x))
-        collect (list (first x) (token-value (second x)))))
+     collect (list (first x) (token-value (second x)))))
+
+'(defun read-all-tokens (js-string)
+  "Return a list of cons cells representing the tokens
+   of JS-STRING.  The CAR of each cell is the type of
+   token, and the CDR is the source text."
+  (loop with l = (make-lexer-function (make-instance 'javascript-lexer :text js-string))
+     for x = (multiple-value-list (funcall l))
+     until (null (first x))
+     collect x))
+
+'(loop with l = (make-lexer-function (make-instance 'javascript-lexer :text js-string))
+    for x = (multiple-value-list (funcall l))
+    until (null (first x))
+    collect x)
 
 (deftest lexer/1 :notes lexer
   (read-all-tokens

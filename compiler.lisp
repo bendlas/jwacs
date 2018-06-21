@@ -450,3 +450,13 @@
 
 (defun process (in-path)
   (transform-modules (list (make-module :type 'jw :path in-path))))
+
+(defun transform-js (xforms js-string)
+  (let ((module (make-module :uripath "/out"
+                             :path "/tmp/jwapp/out.js"
+                             :type 'js :compressed-p nil
+                             :inline-stream (make-string-output-stream)))
+        (ast (parse js-string)))
+    (with-module-output (out module)
+      (emit-elms (pipeline-compile ast xforms) out :pretty-output t)
+      (get-module-text module))))

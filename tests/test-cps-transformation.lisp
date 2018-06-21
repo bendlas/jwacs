@@ -7,6 +7,53 @@
 ;;;
 (in-package :jwacs-tests)
 
+#+_
+'((transform-js
+   *compiler-pipeline*
+   "
+function Nb(a){
+  a:while(true){
+    break a;
+  }
+}
+")
+  
+  (transform-js
+   *compiler-pipeline*
+   "
+function Nb(a){
+  a:{
+    while(true){
+      break a;
+    };
+  }
+}
+")
+
+  (transform-js
+   *compiler-pipeline*
+   "
+function Nb(a){
+  a : {
+    break a;
+    return 1;
+  }
+  return 2;
+}
+")
+
+  
+
+  (transform-js *compiler-pipeline* "function x(b){
+  a:if (b>0) {
+    b--;
+    break a;
+  } else {
+    return 1
+  }
+  return b;
+}"))
+
 ;;;; Test categories 
 (defnote cps "tests for the cps transformation")
 
