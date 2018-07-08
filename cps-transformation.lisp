@@ -339,9 +339,24 @@
   (let ((termination-needed-p (and (not *in-local-scope*)
                                    (introduces-fn-call-p elm-list)
                                    (not (explicitly-terminated-p elm-list '(:suspend :resume :throw))))))
-    (if termination-needed-p
-      (postpend elm-list (make-suspend-statement))
-      elm-list)))
+    (let* ((el (combine-statements elm-list))
+           (lst (first (last el))))
+      (if termination-needed-p
+                                        ;(postpend elm-list (make-suspend-statement))
+          (append
+           (butlast el)
+           (cons
+            (cond
+              ((return-statement-p lst)
+               lst)
+              ((try-p lst)
+               (make-try :body (maybe-terminate-toplevel (try-body lst))
+                         :catch-clause (when-let (c (try-catch-clause lst)) (maybe-terminate-toplevel c))
+                         :finally-clause (when-let (c (try-finally-clause lst)) (maybe-terminate-toplevel c))))
+              (t
+               (make-return-statement :arg lst)))
+            nil))
+          elm-list))))
 
 (defmethod tx-cps ((elm-list list) statement-tail)
   (unless (null elm-list)
