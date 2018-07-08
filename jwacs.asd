@@ -65,5 +65,5 @@
                (:file "runtime-transformation")
                (:file "compiler")
                (:file "main"))
-  :depends-on ("cl-ppcre")
+  :depends-on ("cl-ppcre" "usocket" "bt-semaphore" "trivial-shell")
   :in-order-to ((test-op (test-op "jwacs-tests"))))
